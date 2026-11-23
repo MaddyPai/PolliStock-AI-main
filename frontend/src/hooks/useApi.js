@@ -1,49 +1,58 @@
-const BASE = '/api';
+
+const BASE = (
+  import.meta.env.VITE_API_URL || '/api'
+).replace(/\/+$/, '');
+
+async function apiRequest(endpoint) {
+  const response = await fetch(`${BASE}${endpoint}`);
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Invalid server response (${response.status})`);
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || `Request failed with status ${response.status}`
+    );
+  }
+
+  return data;
+}
 
 export async function fetchElectionAnalysis(year, party) {
-  const res = await fetch(`${BASE}/election-analysis?year=${year}&party=${party}`);
-  return res.json();
+  return apiRequest(
+    `/election-analysis?year=${encodeURIComponent(year)}&party=${encodeURIComponent(party)}`
+  );
 }
 
 export async function fetchCompanyAnalysis(query) {
-  const res = await fetch(`${BASE}/company-analysis?q=${encodeURIComponent(query)}`);
-  return res.json();
+  return apiRequest(
+    `/company-analysis?q=${encodeURIComponent(query)}`
+  );
 }
 
 export async function fetchHistoricalTrends() {
-  const res = await fetch(`${BASE}/historical-trends`);
-  return res.json();
+  return apiRequest('/historical-trends');
 }
 
 export async function fetchPrediction(party, state) {
-  const res = await fetch(`${BASE}/prediction?party=${party}&state=${encodeURIComponent(state)}`);
-  return res.json();
+  return apiRequest(
+    `/prediction?party=${encodeURIComponent(party)}&state=${encodeURIComponent(state)}`
+  );
 }
 
 export async function fetchMarketData(company, period = '6mo') {
-  const res = await fetch(
-    `${BASE}/market-data?company=${encodeURIComponent(company)}&period=${period}`
+  return apiRequest(
+    `/market-data?company=${encodeURIComponent(company)}&period=${encodeURIComponent(period)}`
   );
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || 'Unable to fetch market data');
-  }
-
-  return data;
 }
 
 export async function fetchCompanyNews(company, limit = 10) {
-  const res = await fetch(
-    `${BASE}/company-news?company=${encodeURIComponent(company)}&limit=${limit}`
+  return apiRequest(
+    `/company-news?company=${encodeURIComponent(company)}&limit=${encodeURIComponent(limit)}`
   );
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || 'Unable to fetch company news');
-  }
-
-  return data;
 }
