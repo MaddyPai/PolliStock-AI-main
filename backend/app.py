@@ -5,6 +5,7 @@ from flask_cors import CORS
 from market_data import fetch_market_data
 from news_data import fetch_company_news
 from sentiment_analysis import analyze_news_list
+from election_event_study import list_events, analyze_event
 
 from data import (
     ELECTION_DATA,
@@ -354,6 +355,35 @@ def company_news():
         return jsonify({
             "error": "Could not fetch company news.",
             "details": str(error)
+        }), 502
+
+
+# ---------------- HISTORICAL ELECTION EVENT STUDY ----------------
+@app.route("/api/election-event-study/events", methods=["GET"])
+def election_event_study_events():
+    return jsonify({"events": list_events()})
+
+
+@app.route("/api/election-event-study/analyze", methods=["GET"])
+def election_event_study_analyze():
+    event_id = request.args.get("event_id", "").strip()
+    company = request.args.get("company", "").strip()
+    window = request.args.get("window", "5").strip()
+
+    if not event_id or not company:
+        return jsonify({
+            "error": "Please provide event_id and company query parameters."
+        }), 400
+
+    try:
+        result = analyze_event(event_id, company, window)
+        return jsonify(result)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception:
+        app.logger.exception("Election event study failed")
+        return jsonify({
+            "error": "Could not complete historical election event study."
         }), 502
 
 
